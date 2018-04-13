@@ -21,7 +21,11 @@ namespace Schedule_parser
         public List<Data> dataList = new List<Data>();
         public List<string> numbers = new List<string> { "1", "2", "3", "4", "5", "6" };
         public List<DateTime> dateList = new List<DateTime>();
+        public List<DataEntry> profesorsLectures = new List<DataEntry>();
         public static List<DataEntry> entryList = new List<DataEntry>();
+        public Dictionary<string, List<DataEntry>> lections = new Dictionary<string, List<DataEntry>>();
+        public int mon, tue, wed, thur, fri, sat = 0;
+        public int hallRowIndex, hallColIndex;
         int lastRow, lastCol;
         public string group;
 
@@ -37,11 +41,21 @@ namespace Schedule_parser
 
             OpenFileDialog openDialog = new OpenFileDialog();
             openDialog.Filter = "Файл Excel|*.XLSX;*.XLS";
+            openDialog.Multiselect = true;
             openDialog.ShowDialog();
+            //string fileName = Path.GetFileName(openDialog.FileName);
 
+            foreach (String file in openDialog.FileNames)
+            {
+                multiSelect(file);
+            }
+        }
+
+        public void multiSelect(string fileName)
+        {
             var ExcelApp = new Excel.Application();
             //Книга.
-            var WorkBookExcel = ExcelApp.Workbooks.Open(openDialog.FileName);
+            var WorkBookExcel = ExcelApp.Workbooks.Open(fileName);
             //Таблица.
             var WorkSheetExcel = (Excel.Worksheet)WorkBookExcel.Sheets[1];
 
@@ -54,6 +68,11 @@ namespace Schedule_parser
                 {
                     list[i, j] = WorkSheetExcel.Cells[i + 1, j + 1].Text.ToString();//считал текст ячейки в строку
                     lastCol = j;
+                    if (list[i, j] == "ауд.")
+                    {
+                        hallRowIndex = i;
+                        hallColIndex = j;
+                    }
 
                     //Определяет какой группе принадлежит прочитанный файл расписания (находит значение переменной "group")
                     if (j != 0 && list[i, j - 1] == "№ пары")
@@ -83,22 +102,279 @@ namespace Schedule_parser
             //Создает список из объектов класса DataEntry, которые представляют собой записи о занятиях, разделенные по полям класса (group, date, subject, professor)
             dataList.ForEach(GetEntry);
             dateList.Sort();
-            SortEntryListByDate(entryList);
+            GetProfessorsLectures(entryList);
+            // CreateExcelFile(entryList[1]);
         }
 
-        public void multiSelect()
+        public void GetProfessorsLectures(List<DataEntry> entryList)
         {
+            foreach (DataEntry entry in entryList)
+            {
+                if (entry.professor == professorsComboBox.Text)
+                    profesorsLectures.Add(entry);
+            }
 
+            foreach (DataEntry entry in profesorsLectures)
+            {
+                if (lections.ContainsKey(entry.date))
+                {
+                    lections[entry.date].Add(entry);
+                }
+                else
+                {
+                    var lectionDay = new List<DataEntry>();
+                    lectionDay.Add(entry);
+                    lections.Add(entry.date, lectionDay);
+                }
+            }
         }
 
-        public void SortEntryListByDate(List<DataEntry> entryList)
+        private void professorsComboBox_TextChanged(object sender, EventArgs e)
         {
-            
+            GetProfessorsLectures(entryList);
         }
 
-        public void CreateExcelFile(int count)
+        public void CreateExcelFile(DataEntry entry)
         {
+            var info = entry;
 
+            Excel.Application xlApp = new Excel.Application();
+            if (xlApp == null)
+            {
+                MessageBox.Show("Excel is not properly installed!!");
+                return;
+            }
+
+            object misValue = System.Reflection.Missing.Value;
+
+            var xlWorkBook = xlApp.Workbooks.Add(misValue);
+            var xlWorkSheet = (Excel.Worksheet)xlWorkBook.Worksheets.get_Item(1);
+            var cells = xlWorkSheet.Cells;
+
+            cells[3, 1] = "Понедельник";
+            cells[11, 1] = "Вторник";
+            cells[19, 1] = "Среда";
+            cells[30, 1] = "Четверг";
+            cells[41, 1] = "Пятница";
+            cells[52, 1] = "Суббота";
+
+            //Понедельник
+            var range = xlWorkSheet.Range[cells[3, 1], cells[10, 1]];
+            range.Merge();
+            range.Cells.Orientation = Excel.XlOrientation.xlUpward;
+            range.VerticalAlignment = Excel.XlVAlign.xlVAlignCenter;
+            range.HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
+
+            //Вторник
+            range = xlWorkSheet.Range[cells[11, 1], cells[18, 1]];
+            range.Merge();
+            range.Cells.Orientation = Excel.XlOrientation.xlUpward;
+            range.VerticalAlignment = Excel.XlVAlign.xlVAlignCenter;
+            range.HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
+
+            //Среда
+            range = xlWorkSheet.Range[cells[19, 1], cells[26, 1]];
+            range.Merge();
+            range.Cells.Orientation = Excel.XlOrientation.xlUpward;
+            range.VerticalAlignment = Excel.XlVAlign.xlVAlignCenter;
+            range.HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
+
+            //Четверг
+            range = xlWorkSheet.Range[cells[27, 1], cells[34, 1]];
+            range.Merge();
+            range.Cells.Orientation = Excel.XlOrientation.xlUpward;
+            range.VerticalAlignment = Excel.XlVAlign.xlVAlignCenter;
+            range.HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
+
+            //Пятница
+            range = xlWorkSheet.Range[cells[35, 1], cells[42, 1]];
+            range.Merge();
+            range.Cells.Orientation = Excel.XlOrientation.xlUpward;
+            range.VerticalAlignment = Excel.XlVAlign.xlVAlignCenter;
+            range.HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
+
+            //Суббота
+            range = xlWorkSheet.Range[cells[43, 1], cells[50, 1]];
+            range.Merge();
+            range.Cells.Orientation = Excel.XlOrientation.xlUpward;
+            range.VerticalAlignment = Excel.XlVAlign.xlVAlignCenter;
+            range.HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
+
+            foreach (string key in lections.Keys)
+            {
+                switch (DateTime.ParseExact(key, "dd.MM.yy", CultureInfo.InvariantCulture).DayOfWeek)
+                {
+                    case DayOfWeek.Monday:
+                        {
+                            mon++;
+                            break;
+                        }
+                    case DayOfWeek.Tuesday:
+                        {
+                            tue++;
+                            break;
+                        }
+                    case DayOfWeek.Wednesday:
+                        {
+                            wed++;
+                            break;
+                        }
+                    case DayOfWeek.Thursday:
+                        {
+                            thur++;
+                            break;
+                        }
+                    case DayOfWeek.Friday:
+                        {
+                            fri++;
+                            break;
+                        }
+                    case DayOfWeek.Saturday:
+                        {
+                            sat++;
+                            break;
+                        }
+                }
+                                //CreateBlockTemplate(x, y, xlWorkSheet, cells, key);
+                                //FillBlock(x, y, xlWorkSheet, cells, key, lections[key]);
+            }
+
+            int x = 3;
+            int y = 2;
+            int a1 = 3;
+            int a2 = 3;
+            int a3 = 3;
+            int a4 = 3;
+            int a5 = 3;
+            int a6 = 3;
+
+            foreach (string key in lections.Keys)
+            {
+                switch (DateTime.ParseExact(key, "dd.MM.yy", CultureInfo.InvariantCulture).DayOfWeek)
+                {
+                    case DayOfWeek.Monday:
+                        {
+                            CreateBlockTemplate(a1, y, xlWorkSheet, cells, key);
+                            FillBlock(a1, y, xlWorkSheet, cells, key, lections[key]);
+                            a1 += 8;
+                            break;
+                        }
+                    case DayOfWeek.Tuesday:
+                        {
+                            CreateBlockTemplate(a2, y + 8, xlWorkSheet, cells, key);
+                            FillBlock(a2, y + 8, xlWorkSheet, cells, key, lections[key]);
+                            a2 += 8;
+                            break;
+                        }
+                    case DayOfWeek.Wednesday:
+                        {
+                            CreateBlockTemplate(a3, y + 16, xlWorkSheet, cells, key);
+                            FillBlock(a3, y + 16, xlWorkSheet, cells, key, lections[key]);
+                            a3 += 8;
+                            break;
+                        }
+                    case DayOfWeek.Thursday:
+                        {
+                            CreateBlockTemplate(a4, y + 24, xlWorkSheet, cells, key);
+                            FillBlock(a4, y + 24, xlWorkSheet, cells, key, lections[key]);
+                            a4 += 8;
+                            break;
+                        }
+                    case DayOfWeek.Friday:
+                        {
+                            CreateBlockTemplate(a5, y + 32, xlWorkSheet, cells, key);
+                            FillBlock(a5, y + 32, xlWorkSheet, cells, key, lections[key]);
+                            a5 += 8;
+                            break;
+                        }
+                    case DayOfWeek.Saturday:
+                        {
+                            CreateBlockTemplate(a6, y + 40, xlWorkSheet, cells, key);
+                            FillBlock(a6, y + 40, xlWorkSheet, cells, key, lections[key]);
+                            a6 += 8;
+                            break;
+                        }
+                }
+            }
+
+            xlWorkBook.SaveAs("d:\\Professor's_Schedule.xlsx", Excel.XlFileFormat.xlOpenXMLWorkbook, misValue, misValue, misValue, misValue, Excel.XlSaveAsAccessMode.xlExclusive, misValue, misValue, misValue, misValue, misValue);
+            xlWorkBook.Close(true, misValue, misValue);
+            xlApp.Quit();
+        }
+
+        public void FillBlock(int y, int x, Excel.Worksheet xlWorkSheet, Excel.Range cells, string date, List<DataEntry> entryList)
+        {
+           /* cells[x + 1, y    ] = date; //date
+            cells[x + 2, y - 1] = "№ пары";
+            cells[x + 2, y    ] = "Группа";
+            cells[x + 2, y + 1] = "Предмет";
+            cells[x + 2, y + 2] = "Кабинет";
+            cells[x + 2, y + 3] = "Вид занятия";
+            var range = xlWorkSheet.Range[cells[x + 1, y - 1], cells[x + 1, y + 3]];
+            range.Merge();
+            range.HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter; */
+
+            for (int i = 1; i <= 6; i++)
+            {
+                //№ пары
+                cells[x + 2 + i, y - 1] = i;
+                DataEntry entry = GetEntry(entryList, i);
+                if (entry != null)
+                {
+                    if (cells[x + 2 + i, y] == null)
+                    {
+                        cells[x + 2 + i, y] = entry.grp;
+                        cells[x + 2 + i, y + 1] = entry.subject;
+                        cells[x + 2 + i, y + 2] = entry.lectureHall;
+                        cells[x + 2 + i, y + 3] = entry.type;
+                    }
+                    else
+                    {
+                        cells[x + 2 + i, y] = cells[x + 2 + i, y].Text.ToString() + " " + entry.grp;
+                        cells[x + 2 + i, y + 1] = entry.subject;
+                        cells[x + 2 + i, y + 2] = entry.lectureHall;
+                        cells[x + 2 + i, y + 3] = entry.type;
+                    }
+                }
+            }
+        }
+
+        public void CreateBlockTemplate(int y, int x, Excel.Worksheet xlWorkSheet, Excel.Range cells, string date)
+        {
+            cells[x + 1, y] = date; //date
+            cells[x + 2, y - 1] = "№ пары";
+            cells[x + 2, y] = "Группа";
+            cells[x + 2, y + 1] = "Предмет";
+            cells[x + 2, y + 2] = "Кабинет";
+            cells[x + 2, y + 3] = "Вид занятия";
+            var range = xlWorkSheet.Range[cells[x + 1, y - 1], cells[x + 1, y + 3]];
+            range.Merge();
+            range.HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
+        }
+
+        public DataEntry GetEntry(List<DataEntry> entryList, int value)
+        {
+            foreach (DataEntry entry in entryList)
+            {
+                if (entry.number == value.ToString())
+                    return entry;
+            }
+            return null;
+        }
+
+        /* public bool Contains(List<DataEntry> entryList, int value)
+         {
+             foreach (DataEntry entry in entryList)
+             {
+                 if (entry.number == value.ToString())
+                     return true;
+             }
+             return false;
+         } */
+
+        private void DELETE_ME_Click(object sender, EventArgs e)
+        {
+            CreateExcelFile(entryList[1]);
         }
 
         //Все строки excel файла добавляются в список
@@ -111,8 +387,9 @@ namespace Schedule_parser
                     if (contains)
                     {
                         var arr = Regex.Split(l[i, j + 1], "\n");
-                        var halls = Regex.Split(l[i, j + 3], "\n");
+                        var halls = Regex.Split(l[i, hallColIndex], "\n");
                         int k = 0;
+                        int n = 0;
                         Data data;
                         DataEntry entry;
 
@@ -130,7 +407,7 @@ namespace Schedule_parser
                                 string professor = substrings[1];
                                 //Удалить из поля professor лишние символы
                                 if (professor.Contains(";"))
-                                     professor = professor.Replace(";", "");
+                                    professor = professor.Replace(";", "");
                                 //Добавить профессора в combobox список профессоров (если уже не был добавлен)
                                 if (!professorsComboBox.Items.Contains(professor)) professorsComboBox.Items.Add(professor);
 
@@ -144,9 +421,9 @@ namespace Schedule_parser
                                 {
                                     string[] damnedSplit = Regex.Split(str, "-");
                                     //   entry = new DataEntry(l[i, j], damnedSplit[0], subject, professor, group, "xxx", damnedSplit[1]);
-                                    k = 0;
-                                    data = new Data(l[i, j], damnedSplit[0] + subject + "; " + damnedSplit[1] + ": " + professor, halls[k]);
-                                    if (halls.Length > 1) k++;
+                                 //   k = 0;
+                                    data = new Data(l[i, j], damnedSplit[0] + subject + "; " + damnedSplit[1] + ": " + professor, halls[n]);
+                                    if (halls.Length > 1) n++;
 
                                     //Добавить профессора в combobox список профессоров (если уже не был добавлен)
                                     if (data.data != "")
@@ -161,7 +438,7 @@ namespace Schedule_parser
                             }
                             else
                             {
-                                k = 0;
+                              //  k = 0;
                                 data = new Data(l[i, j], info, halls[k]);
                                 if (halls.Length > 1) k++;
 
@@ -317,8 +594,21 @@ namespace Schedule_parser
         //Open file
         private void OpenFile_button_Click(object sender, EventArgs e)
         {
+            profesorsLectures.Clear();
+            professors.Clear();
+            dataList.Clear();
+            profesorsLectures.Clear();
+            dateList.Clear();
+            entryList.Clear();
+            lections.Clear();
+
+
             ReadExcelFile();
         }
+
+
+
+
 
         //Print to textBox
         private void button1_Click(object sender, EventArgs e)
@@ -357,16 +647,16 @@ namespace Schedule_parser
 
             info = substrings[0];
 
-                //date
-                substrings = Regex.Split(info, "[г]..[а-яА-Я]{3}");
-                date = substrings[0] + "г.";
-                //date = substrings[0];
+            //date
+            substrings = Regex.Split(info, "[г]...[а-яА-Я]{3}");
+            date = substrings[0] + "г.";
+            //date = substrings[0];
 
-                //subject
-                temp = info.Remove(0, date.Length);
-                subject = Regex.Split(temp, "; ")[0];
-                type = Regex.Split(temp, "; ")[1];
-                //subject = GetSubjectShortname(subject);
+            //subject
+            temp = info.Remove(0, date.Length);
+            subject = Regex.Split(temp, "; ")[0];
+            type = Regex.Split(temp, "; ")[1];
+            //subject = GetSubjectShortname(subject);
         }
 
         public string GetSubjectShortname(string subject)
@@ -375,7 +665,7 @@ namespace Schedule_parser
             string subj = "";
             foreach (char ch in temp)
             {
-                if (Char.IsUpper(ch)) subj += ch; 
+                if (Char.IsUpper(ch)) subj += ch;
             }
             return subj;
         }

@@ -34,6 +34,7 @@
             this.OpenFile_button = new System.Windows.Forms.Button();
             this.richTextBox1 = new System.Windows.Forms.RichTextBox();
             this.professorsComboBox = new System.Windows.Forms.ComboBox();
+            this.DELETE_ME = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // button1
@@ -86,12 +87,24 @@
             this.professorsComboBox.Name = "professorsComboBox";
             this.professorsComboBox.Size = new System.Drawing.Size(225, 24);
             this.professorsComboBox.TabIndex = 4;
+            this.professorsComboBox.TextChanged += new System.EventHandler(this.professorsComboBox_TextChanged);
+            // 
+            // DELETE_ME
+            // 
+            this.DELETE_ME.Location = new System.Drawing.Point(863, 569);
+            this.DELETE_ME.Name = "DELETE_ME";
+            this.DELETE_ME.Size = new System.Drawing.Size(75, 23);
+            this.DELETE_ME.TabIndex = 5;
+            this.DELETE_ME.Text = "button2";
+            this.DELETE_ME.UseVisualStyleBackColor = true;
+            this.DELETE_ME.Click += new System.EventHandler(this.DELETE_ME_Click);
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1276, 623);
+            this.Controls.Add(this.DELETE_ME);
             this.Controls.Add(this.professorsComboBox);
             this.Controls.Add(this.richTextBox1);
             this.Controls.Add(this.OpenFile_button);
@@ -113,6 +126,7 @@
         private System.Windows.Forms.Button OpenFile_button;
         private System.Windows.Forms.RichTextBox richTextBox1;
         private System.Windows.Forms.ComboBox professorsComboBox;
+        private System.Windows.Forms.Button DELETE_ME;
     }
 }
 
