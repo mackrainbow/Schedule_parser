@@ -23,7 +23,7 @@ namespace Schedule_parser
         public List<DateTime> dateList = new List<DateTime>();
         public List<DataEntry> profesorsLectures = new List<DataEntry>();
         public static List<DataEntry> entryList = new List<DataEntry>();
-        public Dictionary<string, List<DataEntry>> lections = new Dictionary<string, List<DataEntry>>();
+        public SortedDictionary<string, List<DataEntry>> lections = new SortedDictionary<string, List<DataEntry>>(new SortComparer());
         public int mon, tue, wed, thur, fri, sat = 0;
         public int hallRowIndex, hallColIndex;
         int lastRow, lastCol;
@@ -126,12 +126,18 @@ namespace Schedule_parser
                     lectionDay.Add(entry);
                     lections.Add(entry.date, lectionDay);
                 }
-            }
+            }      
         }
 
         private void professorsComboBox_TextChanged(object sender, EventArgs e)
         {
             GetProfessorsLectures(entryList);
+            SaveFileButton.Enabled = true;
+        }
+
+        private void SaveFileButton_Click(object sender, EventArgs e)
+        {
+            CreateExcelFile(entryList[1]);
         }
 
         public void CreateExcelFile(DataEntry entry)
@@ -297,24 +303,18 @@ namespace Schedule_parser
                 }
             }
 
-            xlWorkBook.SaveAs("d:\\Professor's_Schedule.xlsx", Excel.XlFileFormat.xlOpenXMLWorkbook, misValue, misValue, misValue, misValue, Excel.XlSaveAsAccessMode.xlExclusive, misValue, misValue, misValue, misValue, misValue);
+            SaveFileDialog saveDialog = new SaveFileDialog();
+            saveDialog.Filter = "Файл Excel|*.XLSX;*.XLS";
+            saveDialog.RestoreDirectory = true;
+
+
+          //  xlWorkBook.SaveAs("d:\\Professor's_Schedule.xlsx", Excel.XlFileFormat.xlOpenXMLWorkbook, misValue, misValue, misValue, misValue, Excel.XlSaveAsAccessMode.xlExclusive, misValue, misValue, misValue, misValue, misValue);
             xlWorkBook.Close(true, misValue, misValue);
             xlApp.Quit();
         }
 
         public void FillBlock(int y, int x, Excel.Worksheet xlWorkSheet, Excel.Range cells, string date, List<DataEntry> entryList)
-        {
-           /* cells[x + 1, y    ] = date; //date
-            cells[x + 2, y - 1] = "№ пары";
-            cells[x + 2, y    ] = "Группа";
-            cells[x + 2, y + 1] = "Предмет";
-            cells[x + 2, y + 2] = "Кабинет";
-            cells[x + 2, y + 3] = "Вид занятия";
-            var range = xlWorkSheet.Range[cells[x + 1, y - 1], cells[x + 1, y + 3]];
-            range.Merge();
-            range.HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter; */
-
-            for (int i = 1; i <= 6; i++)
+        {         for (int i = 1; i <= 6; i++)
             {
                 //№ пары
                 cells[x + 2 + i, y - 1] = i;
@@ -372,10 +372,7 @@ namespace Schedule_parser
              return false;
          } */
 
-        private void DELETE_ME_Click(object sender, EventArgs e)
-        {
-            CreateExcelFile(entryList[1]);
-        }
+
 
         //Все строки excel файла добавляются в список
         public void addToDataList(string[,] l)
@@ -570,27 +567,6 @@ namespace Schedule_parser
             return s;
         }
 
-        //Print entries from entryList to textBox
-        public void PrintEntryList(List<DataEntry> entryList)
-        {
-            string professor = professorsComboBox.Text;
-            string str = "";
-            for (int i = 0; i < entryList.Count; i++)
-            {
-                if (entryList[i].professor.Contains(professor))
-                {
-                    str = str + entryList[i].number + ") " + entryList[i].date + " " + entryList[i].subject + " " + entryList[i].professor + " " + entryList[i].grp + " " + entryList[i].lectureHall + " " + entryList[i].type + Environment.NewLine;
-                }
-            }
-            richTextBox1.Text = str;
-        }
-
-        //
-        void print(string str)
-        {
-            richTextBox1.Text += str + Environment.NewLine;
-        }
-
         //Open file
         private void OpenFile_button_Click(object sender, EventArgs e)
         {
@@ -604,16 +580,6 @@ namespace Schedule_parser
 
 
             ReadExcelFile();
-        }
-
-
-
-
-
-        //Print to textBox
-        private void button1_Click(object sender, EventArgs e)
-        {
-            PrintEntryList(entryList);
         }
     }
 
@@ -693,6 +659,17 @@ namespace Schedule_parser
             subject = Subject;
             type = Type;
             professor = Professor;
+        }
+    }
+
+    public class SortComparer : IComparer<string>
+    {
+        public int Compare (string x, string y)
+        {
+            DateTime xDate = DateTime.ParseExact(x, "dd.MM.yy", CultureInfo.InvariantCulture);
+            DateTime yDate = DateTime.ParseExact(y, "dd.MM.yy", CultureInfo.InvariantCulture);
+
+            return xDate.CompareTo(yDate);
         }
     }
 }
