@@ -334,6 +334,8 @@ namespace Schedule_parser
                         cells[x + 2 + i, y + 1] = entry.subject;
                         cells[x + 2 + i, y + 2] = entry.lectureHall;
                         cells[x + 2 + i, y + 3] = entry.type;
+                        var range = xlWorkSheet.Range[cells[x + 2 + i, y], cells[x + 2 + i, y + 3]];
+                        range.Font.Color = ColorTranslator.ToOle(Color.Red);
                     }
                 }
             }
