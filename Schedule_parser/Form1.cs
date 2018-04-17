@@ -112,10 +112,6 @@ namespace Schedule_parser
             {
                 if (entry.professor == professorsComboBox.Text)
                 {
-                    if (entry.date == "29.01.18")
-                    {
-
-                    }
                     profesorsLectures.Add(entry);
                 }
 
@@ -248,11 +244,8 @@ namespace Schedule_parser
                             break;
                         }
                 }
-                                //CreateBlockTemplate(x, y, xlWorkSheet, cells, key);
-                                //FillBlock(x, y, xlWorkSheet, cells, key, lections[key]);
             }
 
-            int x = 3;
             int y = 2;
             int a1 = 3;
             int a2 = 3;
@@ -314,8 +307,6 @@ namespace Schedule_parser
             saveDialog.Filter = "Файл Excel|*.XLSX;*.XLS";
             saveDialog.RestoreDirectory = true;
 
-
-          //  xlWorkBook.SaveAs("d:\\Professor's_Schedule.xlsx", Excel.XlFileFormat.xlOpenXMLWorkbook, misValue, misValue, misValue, misValue, Excel.XlSaveAsAccessMode.xlExclusive, misValue, misValue, misValue, misValue, misValue);
             xlWorkBook.Close(true, misValue, misValue);
             xlApp.Quit();
         }
@@ -326,27 +317,26 @@ namespace Schedule_parser
             {
                 //№ пары
                 cells[x + 2 + i, y - 1] = i;
-                DataEntry entry = GetEntry(entryList, i);
-                if (entry != null)
+                
+                var entries = GetEntry(entryList, i);
+                if (entries.Count != 0)
                 {
-                    if (entry.date == "29.01.18")
+                    if (entries.Count == 1)
                     {
-
-                    }
-                    if (cells[x + 2 + i, y].Value2 == null)
-                    {
-                        cells[x + 2 + i, y] = entry.grp;
-                        cells[x + 2 + i, y + 1] = entry.subject;
-                        cells[x + 2 + i, y + 2] = entry.lectureHall;
-                        cells[x + 2 + i, y + 3] = entry.type;
+                            cells[x + 2 + i, y] = entries[0].grp;
+                            cells[x + 2 + i, y + 1] = entries[0].subject;
+                            cells[x + 2 + i, y + 2] = entries[0].lectureHall;
+                            cells[x + 2 + i, y + 3] = entries[0].type;
                     }
                     else
                     {
-                        cells[x + 2 + i, y - 1] = "! " + cells[x + 2 + i, y - 1].Text.ToString();
-                        cells[x + 2 + i, y] = cells[x + 2 + i, y].Text.ToString() + " " + entry.grp;
-
-                        var range = xlWorkSheet.Range[cells[x + 2 + i, y], cells[x + 2 + i, y + 3]];
-                        range.Font.Color = ColorTranslator.ToOle(Color.Red);
+                        foreach (DataEntry entry in entries)
+                        {
+                            cells[x + 2 + i, y - 1] = "! " + cells[x + 2 + i, y - 1].Text.ToString();
+                            cells[x + 2 + i, y] = cells[x + 2 + i, y].Text.ToString() + " " + entry.grp;
+                            var range = xlWorkSheet.Range[cells[x + 2 + i, y], cells[x + 2 + i, y + 3]];
+                            range.Font.Color = ColorTranslator.ToOle(Color.Red);
+                        }
                     }
                 }
             }
@@ -365,27 +355,16 @@ namespace Schedule_parser
             range.HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
         }
 
-        public DataEntry GetEntry(List<DataEntry> entryList, int value)
+        public List<DataEntry> GetEntry(List<DataEntry> entryList, int value)
         {
+            List<DataEntry> entries = new List<DataEntry>();
             foreach (DataEntry entry in entryList)
             {
                 if (entry.number == value.ToString())
-                    return entry;
+                    entries.Add(entry);
             }
-            return null;
+            return entries;
         }
-
-        /* public bool Contains(List<DataEntry> entryList, int value)
-         {
-             foreach (DataEntry entry in entryList)
-             {
-                 if (entry.number == value.ToString())
-                     return true;
-             }
-             return false;
-         } */
-
-
 
         //Все строки excel файла добавляются в список
         public void addToDataList(string[,] l)
@@ -430,8 +409,6 @@ namespace Schedule_parser
                                 foreach (string str in splitContent)
                                 {
                                     string[] damnedSplit = Regex.Split(str, "-");
-                                    //   entry = new DataEntry(l[i, j], damnedSplit[0], subject, professor, group, "xxx", damnedSplit[1]);
-                                 //   k = 0;
                                     data = new Data(l[i, j], damnedSplit[0] + subject + "; " + damnedSplit[1] + ": " + professor, halls[n], group);
                                     if (halls.Length > 1) n++;
 
@@ -472,7 +449,6 @@ namespace Schedule_parser
         {
             if (data.data != "")
             {
-                bool check = true;
                 DateTime date1, date2;
                 string[] splitDate = Regex.Split(data.date, ";");
                 for (int i = 0; i < splitDate.Length; i++)
@@ -620,7 +596,6 @@ namespace Schedule_parser
 
         public void Split(string info)
         {
-            string pat4 = @"[г]..[а-яА-Я]{3}";
             string temp = "";
 
             //professor
@@ -666,8 +641,6 @@ namespace Schedule_parser
 
         public DataEntry(string num, string Date, string Subject, string Professor, string group, string hall, string Type)
         {
-            //if (Date.Contains("г.")) Date.Replace("г.", "");
-
             grp = group;
             lectureHall = hall;
             number = num;
