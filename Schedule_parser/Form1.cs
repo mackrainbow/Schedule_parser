@@ -101,7 +101,7 @@ namespace Schedule_parser
             addToDataList(list);
             //Создает список из объектов класса DataEntry, которые представляют собой записи о занятиях, разделенные по полям класса (group, date, subject, professor)
             dataList.ForEach(GetEntry);
-            dateList.Sort();
+            dataList.Clear();
             GetProfessorsLectures(entryList);
             // CreateExcelFile(entryList[1]);
         }
@@ -111,7 +111,14 @@ namespace Schedule_parser
             foreach (DataEntry entry in entryList)
             {
                 if (entry.professor == professorsComboBox.Text)
+                {
+                    if (entry.date == "29.01.18")
+                    {
+
+                    }
                     profesorsLectures.Add(entry);
+                }
+
             }
 
             foreach (DataEntry entry in profesorsLectures)
@@ -314,14 +321,19 @@ namespace Schedule_parser
         }
 
         public void FillBlock(int y, int x, Excel.Worksheet xlWorkSheet, Excel.Range cells, string date, List<DataEntry> entryList)
-        {         for (int i = 1; i <= 6; i++)
+        {
+            for (int i = 1; i <= 6; i++)
             {
                 //№ пары
                 cells[x + 2 + i, y - 1] = i;
                 DataEntry entry = GetEntry(entryList, i);
                 if (entry != null)
                 {
-                    if (cells[x + 2 + i, y] == null)
+                    if (entry.date == "29.01.18")
+                    {
+
+                    }
+                    if (cells[x + 2 + i, y].Value2 == null)
                     {
                         cells[x + 2 + i, y] = entry.grp;
                         cells[x + 2 + i, y + 1] = entry.subject;
@@ -330,10 +342,9 @@ namespace Schedule_parser
                     }
                     else
                     {
+                        cells[x + 2 + i, y - 1] = "! " + cells[x + 2 + i, y - 1].Text.ToString();
                         cells[x + 2 + i, y] = cells[x + 2 + i, y].Text.ToString() + " " + entry.grp;
-                        cells[x + 2 + i, y + 1] = entry.subject;
-                        cells[x + 2 + i, y + 2] = entry.lectureHall;
-                        cells[x + 2 + i, y + 3] = entry.type;
+
                         var range = xlWorkSheet.Range[cells[x + 2 + i, y], cells[x + 2 + i, y + 3]];
                         range.Font.Color = ColorTranslator.ToOle(Color.Red);
                     }
@@ -382,6 +393,7 @@ namespace Schedule_parser
             for (int i = 0; i < lastRow; i++)
                 for (int j = 0; j < lastCol; j++)
                 {
+                    if (l[i, j] == "№ пары") group = l[i, j + 1];
                     bool contains = numbers.Contains(l[i, j], StringComparer.OrdinalIgnoreCase);
                     if (contains)
                     {
@@ -390,7 +402,6 @@ namespace Schedule_parser
                         int k = 0;
                         int n = 0;
                         Data data;
-                        DataEntry entry;
 
                         foreach (string info in arr)
                         {
@@ -421,7 +432,7 @@ namespace Schedule_parser
                                     string[] damnedSplit = Regex.Split(str, "-");
                                     //   entry = new DataEntry(l[i, j], damnedSplit[0], subject, professor, group, "xxx", damnedSplit[1]);
                                  //   k = 0;
-                                    data = new Data(l[i, j], damnedSplit[0] + subject + "; " + damnedSplit[1] + ": " + professor, halls[n]);
+                                    data = new Data(l[i, j], damnedSplit[0] + subject + "; " + damnedSplit[1] + ": " + professor, halls[n], group);
                                     if (halls.Length > 1) n++;
 
                                     //Добавить профессора в combobox список профессоров (если уже не был добавлен)
@@ -438,7 +449,7 @@ namespace Schedule_parser
                             else
                             {
                               //  k = 0;
-                                data = new Data(l[i, j], info, halls[k]);
+                                data = new Data(l[i, j], info, halls[k], group);
                                 if (halls.Length > 1) k++;
 
                                 //Добавить профессора в combobox список профессоров (если уже не был добавлен)
@@ -461,6 +472,7 @@ namespace Schedule_parser
         {
             if (data.data != "")
             {
+                bool check = true;
                 DateTime date1, date2;
                 string[] splitDate = Regex.Split(data.date, ";");
                 for (int i = 0; i < splitDate.Length; i++)
@@ -475,7 +487,7 @@ namespace Schedule_parser
                         int shutdownCounter = 0;
                         while (date1 != date2)
                         {
-                            DataEntry entry = new DataEntry(data.number, date1.ToString("dd.MM.yy"), data.subject, data.professor, group, data.lectureHall, data.type);
+                            DataEntry entry = new DataEntry(data.number, date1.ToString("dd.MM.yy"), data.subject, data.professor, data.group, data.lectureHall, data.type);
                             RemoveSpareSimbolsInDate(entry);
                             entryList.Add(entry);
 
@@ -487,7 +499,7 @@ namespace Schedule_parser
                             date1 = date1.AddDays(7);
                             if (date1 == date2)
                             {
-                                entry = new DataEntry(data.number, date1.ToString("dd.MM.yy"), data.subject, data.professor, group, data.lectureHall, data.type);
+                                entry = new DataEntry(data.number, date1.ToString("dd.MM.yy"), data.subject, data.professor, data.group, data.lectureHall, data.type);
                                 RemoveSpareSimbolsInDate(entry);
                                 entryList.Add(entry);
 
@@ -512,7 +524,7 @@ namespace Schedule_parser
                         }
                         for (int k = 0; k < splitStr.Length; k++)
                         {
-                            DataEntry entry = new DataEntry(data.number, splitStr[k], data.subject, data.professor, group, data.lectureHall, data.type);
+                            DataEntry entry = new DataEntry(data.number, splitStr[k], data.subject, data.professor, data.group, data.lectureHall, data.type);
                             RemoveSpareSimbolsInDate(entry);
                             entryList.Add(entry);
 
@@ -524,7 +536,7 @@ namespace Schedule_parser
                     }
                     else if (Regex.IsMatch(splitDate[i], @"\d\d[.]\d\d[.]\d\d[г]."))
                     {
-                        DataEntry entry = new DataEntry(data.number, splitDate[i], data.subject, data.professor, group, data.lectureHall, data.type);
+                        DataEntry entry = new DataEntry(data.number, splitDate[i], data.subject, data.professor, data.group, data.lectureHall, data.type);
                         RemoveSpareSimbolsInDate(entry);
                         entryList.Add(entry);
 
@@ -589,6 +601,7 @@ namespace Schedule_parser
     {
         public string data;
 
+        public string group;
         public string number;
         public string date;
         public string subject;
@@ -596,8 +609,9 @@ namespace Schedule_parser
         public string lectureHall;
         public string type;
 
-        public Data(string numberOfLecture, string info, string hall)
+        public Data(string numberOfLecture, string info, string hall, string grp)
         {
+            group = grp; 
             number = numberOfLecture;
             data = info;
             lectureHall = hall;
@@ -624,16 +638,16 @@ namespace Schedule_parser
             temp = info.Remove(0, date.Length);
             subject = Regex.Split(temp, "; ")[0];
             type = Regex.Split(temp, "; ")[1];
-            //subject = GetSubjectShortname(subject);
+            subject = GetSubjectShortname(subject);
         }
 
         public string GetSubjectShortname(string subject)
         {
             char[] temp = subject.ToCharArray();
             string subj = "";
-            foreach (char ch in temp)
+            for (int i = 0; i < temp.Length; i++)
             {
-                if (Char.IsUpper(ch)) subj += ch;
+                if (i != 0 && temp[i - 1] == ' ') subj += Char.ToUpper(temp[i]);
             }
             return subj;
         }
